@@ -1,0 +1,33 @@
+{
+    "areas": [
+        {
+            "name": "area_a",
+            "respawn_delay": 30,
+            "celltag_disable_time": 30,
+            "celltag_radius": 2,
+            "techtypes": [
+                { "techtype": "GGI", "minimum": 24, "taskforce_size": 6 },
+                { "techtype": "DOG", "minimum": 12, "taskforce_size": 3 }
+            ],
+            "spawnpoints": [
+                { "waypoint_id": 151 },
+                { "waypoint_id": 152 },
+                { "waypoint_id": 153 },
+                { "waypoint_id": 154 }
+            ]
+        },
+        {
+            "name": "area_b",
+            "respawn_delay": 15,
+            "celltag_disable_time": 30,
+            "celltag_radius": 2,
+            "techtypes": [
+                { "techtype": "E2", "minimum": 25, "taskforce_size": 7 }
+            ],
+            "spawnpoints": [
+                { "waypoint_id": 155 },
+                { "waypoint_id": 156 }
+            ]
+        }
+    ]
+}
