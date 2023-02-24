@@ -31,7 +31,7 @@ class Taskforce:
 class TaskforceList:
     def __init__(self, ini):
         self.taskforces = []
-        if 'Taskforces' in ini:
+        if 'TaskForces' in ini:
             for id in ini['TaskForces'].values():
                 tf = Taskforce()
                 tf.from_section(id, ini[id])

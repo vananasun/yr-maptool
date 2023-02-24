@@ -1,3 +1,4 @@
+import json
 import argparse
 from internal.preview_base import PreviewBase
 from internal.map_file import MapFile
@@ -129,7 +130,9 @@ elif args.gen_zombie_spawns:
     print("Generating zombie spawn system...")
     map = MapFile()
     map.from_file(args.gen_zombie_spawns[0])
-    gen_zombie_spawns = GenZombieSpawns(map, args.gen_zombie_spawns[1])
+    with open(args.gen_zombie_spawns[1]) as f:
+        spawn_json = json.load(f)
+    gen_zombie_spawns = GenZombieSpawns(map, spawn_json)
     gen_zombie_spawns.generate()
     map.save(args.gen_zombie_spawns[0])
 

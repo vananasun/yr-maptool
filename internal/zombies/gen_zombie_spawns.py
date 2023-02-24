@@ -24,7 +24,7 @@ from internal.zombies.spawnpoint_info import SpawnpointInfo
 
 class GenZombieSpawns:
 
-    def __init__(self, map: MapFile, json_path: str):
+    def __init__(self, map: MapFile, json: dict):
         self.map = map
         self.ini = map.ini
 
@@ -43,9 +43,10 @@ class GenZombieSpawns:
 
         self.id_factory = IDFactory()
 
-        # Load spawnpoint data from a JSON file
-        with open(json_path) as f:
-            self.spawn_json = json.load(f)
+        self.spawn_json = json
+        # # Load spawnpoint data from a JSON file
+        # with open(json_path) as f:
+        #     self.spawn_json = json.load(f)
     
 
     def gen_script(self) -> Script():
@@ -75,8 +76,13 @@ class GenZombieSpawns:
                 if waypoint.index == wp_id:
                     wp_pos = waypoint.coords_txt
             if wp_pos is None:
-                print('Error: Specified waypoint {} does not exist'.format(wp_id))
-                exit()
+                # Just create it
+                wp = Waypoint()
+                wp.from_string(wp_id, '200001')
+                self.waypoints.waypoints.append(wp)
+                wp_pos = '200001'
+                print('Warning: Specified waypoint {} does not exist, creating it...'.format(wp_id))
+                #exit()
 
             # Generate activation variable which is used to determine whether
             # a spawnpoint was deactivated through it's celltags
@@ -153,6 +159,10 @@ class GenZombieSpawns:
         script = self.gen_script() # we only need one script for the entire system
 
 
+        # @TODO: Gather all spawnpoints, then generate celltags & celltag-
+        #        triggers per spawnpoint.
+
+
         for area_json in self.spawn_json['areas']:
 
             local_vars = self.gen_spawn_celltag_logic(area_json)
@@ -219,5 +229,4 @@ class GenZombieSpawns:
         self.events.write_to_ini(self.map.ini)
         self.actions.write_to_ini(self.map.ini)
 
-        # @TODO: Perform ini sort afterwards to clear up any mess we made
 

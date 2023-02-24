@@ -20,10 +20,11 @@ class LocalVariable:
 class LocalVariableList():
     def __init__(self, ini):
         self.variables = []
-        for key in ini['VariableNames']:
-            var = LocalVariable()
-            var.from_string(key, ini['VariableNames'][key])
-            self.variables.append(var)
+        if 'VariableNames' in ini:
+            for key in ini['VariableNames']:
+                var = LocalVariable()
+                var.from_string(key, ini['VariableNames'][key])
+                self.variables.append(var)
 
 
     def get_by_id(self, id):

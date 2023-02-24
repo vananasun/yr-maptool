@@ -18,10 +18,10 @@ class Celltag:
 class CelltagList():
     def __init__(self, ini):
         self.celltags = []
-        if 'Celltags' in ini:
-            for key in ini['Celltags']:
+        if 'CellTags' in ini:
+            for key in ini['CellTags']:
                 celltag = Celltag()
-                celltag.from_string(key, ini['Celltags'][key])
+                celltag.from_string(key, ini['CellTags'][key])
                 self.celltags.append(celltag)
 
 
