@@ -61,14 +61,15 @@ class GenZombieSpawns:
         return script
 
 
-
-    def gen_spawn_celltag_logic(self, area_json: dict):
-
+    def gen_spawn_celltag_logic(self, json: dict):
         local_vars = {}
-        triggers = []
 
-        for spawnpoint_json in area_json['spawnpoints']:
-
+        spawnpoint_list = []
+        for area_json in json['areas']:
+            for spawnpoint_json in area_json['spawnpoints']:
+                spawnpoint_list.append(spawnpoint_json)
+        
+        for spawnpoint_json in spawnpoint_list:
             # Check whether the waypoint really exists and get it's position
             wp_id = spawnpoint_json['waypoint_id']
             wp_pos = None
@@ -82,13 +83,12 @@ class GenZombieSpawns:
                 self.waypoints.waypoints.append(wp)
                 wp_pos = '200001'
                 print('Warning: Specified waypoint {} does not exist, creating it...'.format(wp_id))
-                #exit()
 
             # Generate activation variable which is used to determine whether
             # a spawnpoint was deactivated through it's celltags
             var = LocalVariable()
             var.id = self.id_factory.next_var()
-            var.name = 'spawn_{}_w{}_active'.format(area_json['name'], wp_id)
+            var.name = 'spawn_w{}_active'.format(wp_id)
             var.default_state = '1'
             local_vars[wp_id] = var
             self.variables.variables.append(var)
@@ -96,7 +96,7 @@ class GenZombieSpawns:
             # Generate enable trigger
             t = TriggerContainer(self.id_factory)
             t.setFlags(True, 2)
-            t.setName('SPAWN - {} - w{} re-enable timer'.format(area_json['name'], wp_id))
+            t.setName('SPAWN - w{} re-enable timer'.format(wp_id))
             t.addCondition(Event.EVENT_ELAPSED_TIME, 0, area_json['celltag_disable_time'])
             t.addAction(Action.ACTION_SET_LOCAL, 0, var.id, 0, 0, 0, 0, 'A')
             t.addAction(Action.ACTION_DISABLE_TRIGGER, 2, t.trigger.id, 0, 0, 0, 0, 'A')
@@ -109,7 +109,7 @@ class GenZombieSpawns:
             # Generate disable trigger
             t = TriggerContainer(self.id_factory)
             t.setFlags(False, 2)
-            t.setName('SPAWN - {} - w{} disable by celltags'.format(area_json['name'], wp_id))
+            t.setName('SPAWN - w{} disable by celltags'.format(wp_id))
             t.addCondition(Event.EVENT_ENTERED_BY, 0, -1)
             t.addAction(Action.ACTION_CLEAR_LOCAL, 0, var.id, 0, 0, 0, 0, 'A')
             t.addAction(Action.ACTION_DISABLE_TRIGGER, 2, enable_trigger.trigger.id, 0, 0, 0, 0, 'A')
@@ -158,14 +158,9 @@ class GenZombieSpawns:
 
         script = self.gen_script() # we only need one script for the entire system
 
-
-        # @TODO: Gather all spawnpoints, then generate celltags & celltag-
-        #        triggers per spawnpoint.
-
+        local_vars = self.gen_spawn_celltag_logic(self.spawn_json)
 
         for area_json in self.spawn_json['areas']:
-
-            local_vars = self.gen_spawn_celltag_logic(area_json)
         
             for techtype_json in area_json['techtypes']:
 
