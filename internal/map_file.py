@@ -13,7 +13,8 @@ class MapFile:
 
     
     def from_file(self, map_path: str):
-        self.ini.read(map_path)
+        if not len(self.ini.read(map_path)):
+            raise Exception('Unable to read file "{}"'.format(map_path))
 
 
     def save(self, filename: str):

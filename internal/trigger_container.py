@@ -1,7 +1,7 @@
-from internal.section_tags import Tag, TagList
-from internal.section_triggers import Trigger, TriggerList
-from internal.section_events import Event, EventList
-from internal.section_actions import Action, ActionList
+from internal.sections.section_tags import Tag, TagList
+from internal.sections.section_triggers import Trigger, TriggerList
+from internal.sections.section_events import Event, EventList
+from internal.sections.section_actions import Action, ActionList
 from internal.id_factory import IDFactory
 from copy import deepcopy as deepcopy
 

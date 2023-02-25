@@ -4,19 +4,19 @@ from math import sqrt as sqrt
 from internal.coords import Coords
 from internal.id_factory import IDFactory
 from internal.map_file import MapFile
-from internal.section_actions import Action, ActionList
-from internal.section_celltags import Celltag, CelltagList
-from internal.section_events import Event, EventList
-from internal.section_infantry import Infantry, InfantryList
-from internal.section_scripttypes import Script, ScriptList
-from internal.section_structures import Structure, StructureList
-from internal.section_tags import Tag, TagList
-from internal.section_taskforces import Taskforce, TaskforceList
-from internal.section_teamtypes import Team, TeamList
-from internal.section_triggers import Trigger, TriggerList
-from internal.section_units import Unit, UnitList
-from internal.section_variablenames import LocalVariable, LocalVariableList
-from internal.section_waypoints import Waypoint, WaypointList
+from internal.sections.section_actions import Action, ActionList
+from internal.sections.section_celltags import Celltag, CelltagList
+from internal.sections.section_events import Event, EventList
+from internal.sections.section_infantry import Infantry, InfantryList
+from internal.sections.section_scripttypes import Script, ScriptList
+from internal.sections.section_structures import Structure, StructureList
+from internal.sections.section_tags import Tag, TagList
+from internal.sections.section_taskforces import Taskforce, TaskforceList
+from internal.sections.section_teamtypes import Team, TeamList
+from internal.sections.section_triggers import Trigger, TriggerList
+from internal.sections.section_units import Unit, UnitList
+from internal.sections.section_variablenames import LocalVariable, LocalVariableList
+from internal.sections.section_waypoints import Waypoint, WaypointList
 from internal.trigger_container import TriggerContainer
 from internal.zombies.spawn_area import SpawnArea
 from internal.zombies.spawnpoint_info import SpawnpointInfo
@@ -170,6 +170,7 @@ class GenZombieSpawns:
                 area.gen_trigger_disable_spawnpoints()
                 area.gen_trigger_respawn_queue_loop()
                 area.gen_trigger_min_techtype()
+                area.calc_spawnpoint_weights(self.waypoints, area_json)
 
                 self.remember_trigger(area.trigger_enable_respawn_queue)
                 self.remember_trigger(area.trigger_min_techtype)
@@ -185,10 +186,12 @@ class GenZombieSpawns:
 
                     spawn = SpawnpointInfo(
                         area,
-                        spawnpoint_json['waypoint_id'],
+                        self.waypoints.find(spawnpoint_json['waypoint_id']),
                         self.id_factory)
+                    
                     spawn.gen_team(script, area.taskforce)
                     self.teams.teams.append(spawn.team)
+
                     spawn.gen_trigger_spawn(local_vars[spawnpoint_json['waypoint_id']])
                     self.remember_trigger(spawn.trigger_spawn)
 

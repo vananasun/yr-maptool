@@ -1,0 +1,1 @@
+copy /y "C:\apps\yr-maptool\stuff\spawn_tests.map" "C:\RA2\YR\Maps\Custom\spawn_tests.map"

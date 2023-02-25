@@ -1,12 +1,16 @@
 from internal.id_factory import IDFactory
-from internal.section_actions import Action, ActionList
-from internal.section_events import Event, EventList
-from internal.section_tags import Tag, TagList
-from internal.section_taskforces import Taskforce, TaskforceList
-from internal.section_triggers import Trigger, TriggerList
-from internal.section_variablenames import LocalVariable, LocalVariableList
+from internal.coords import Coords
+from internal.sections.section_actions import Action, ActionList
+from internal.sections.section_events import Event, EventList
+from internal.sections.section_tags import Tag, TagList
+from internal.sections.section_taskforces import Taskforce, TaskforceList
+from internal.sections.section_triggers import Trigger, TriggerList
+from internal.sections.section_variablenames import LocalVariable, LocalVariableList
+from internal.sections.section_waypoints import Waypoint, WaypointList
 from internal.trigger_container import TriggerContainer
 from internal.zombies.spawnpoint_info import SpawnpointInfo
+import statistics
+from math import sqrt
 
 
 class SpawnArea:
@@ -29,6 +33,82 @@ class SpawnArea:
         self.var_is_respawning.id = self.id_factory.next_var()
         self.var_is_respawning.name = 'spawn_{}_respawning'.format(self.name)
         self.var_is_respawning.default_state = '0'
+
+        self.probabilities = {}
+
+
+    def calc_spawnpoint_weights(self, waypoints: WaypointList, area_json: dict):
+        
+        # Gather all spawnpoint positions as integer coordinates,
+        # also gather information about the width and height of the area
+        positions_x = []
+        positions_y = []
+        min_x = 99999
+        max_x = 0
+        min_y = 99999
+        max_y = 0
+        median_pos = (0.0,0.0) # median position of all spawnpoints in this area
+        furthest_dist = 9999999.0 # furthest euclidian distance of spawn to median
+        num_waypoints = 0
+
+        for spawnpoint_json in area_json['spawnpoints']:
+            for waypoint in waypoints.waypoints:
+                if waypoint.index == spawnpoint_json['waypoint_id']:
+                    int_coords = Coords.from_txt(waypoint.coords_txt)
+                    positions_x.append(int_coords.x)
+                    positions_y.append(int_coords.y)
+                    min_x = min(min_x, int_coords.x)
+                    max_x = max(max_x, int_coords.x)
+                    min_y = min(min_y, int_coords.y)
+                    max_y = max(max_y, int_coords.y)
+                    num_waypoints += 1
+
+
+        # Calculate the mean
+        median_pos = ((statistics.median(positions_x)), (statistics.median(positions_y)))
+
+        # Calculate furthest dist
+        ax = (max_x-median_pos[0])
+        ay = (max_y-median_pos[1])
+        bx = (median_pos[0]-min_x)
+        by = (median_pos[1]-min_y)
+        furthest_dist = max(sqrt((ax*ax)+(ay*ay)), sqrt((bx*bx)+(by*by)))
+
+        # Calculate probability weights of spawnpoints
+        for spawnpoint_json in area_json['spawnpoints']:
+            for wp in waypoints.waypoints:
+                if wp.index == spawnpoint_json['waypoint_id']:
+                    wp_pos = Coords.from_txt(wp.coords_txt)
+                    dx = abs(median_pos[0] - wp_pos.x)
+                    dy = abs(median_pos[1] - wp_pos.y)
+                    probability = sqrt((dx*dx)+(dy*dy)) / furthest_dist
+                    # probability = min(max(0.0, probability), 1.0) # correct tiny errors by clamping
+                    self.probabilities[wp.index] = probability
+
+        # Divide probability weights by the list's sum
+        weight_sum = sum(self.probabilities.values())
+        for key, val in self.probabilities.items():
+            self.probabilities[key] = val / weight_sum
+
+        # Normalize values between 0 and 1
+        min_prob = min(self.probabilities.values())
+        max_prob = max(self.probabilities.values())
+        if min_prob != max_prob:
+            for key, val in self.probabilities.items():
+                self.probabilities[key] = (val - min_prob) / (max_prob - min_prob)
+            
+
+    def calc_distributed_spawn_delay(self, waypoint: Waypoint):
+
+        # Calculate random delay for the trigger
+        actual_delay = (1.5 - self.probabilities[waypoint.index]) * (self.respawn_delay)
+
+        # print('Waypoint {} - {}, delay: {}, base_delay: {}'.format(
+        #     waypoint.index, round(self.probabilities[waypoint.index],2), round(actual_delay), self.respawn_delay
+        # ))
+
+        return round(actual_delay)
+
 
 
     def gen_taskforce(self, num_units):

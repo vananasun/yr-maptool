@@ -1,13 +1,13 @@
 from internal.id_factory import IDFactory
-from internal.section_actions import Action, ActionList
-from internal.section_events import Event, EventList
-from internal.section_scripttypes import Script
-from internal.section_tags import Tag, TagList
-from internal.section_taskforces import Taskforce, TaskforceList
-from internal.section_teamtypes import Team, TeamList
-from internal.section_triggers import Trigger, TriggerList
-from internal.section_variablenames import LocalVariable, LocalVariableList
-from internal.section_waypoints import Waypoint, WaypointList
+from internal.sections.section_actions import Action, ActionList
+from internal.sections.section_events import Event, EventList
+from internal.sections.section_scripttypes import Script
+from internal.sections.section_tags import Tag, TagList
+from internal.sections.section_taskforces import Taskforce, TaskforceList
+from internal.sections.section_teamtypes import Team, TeamList
+from internal.sections.section_triggers import Trigger, TriggerList
+from internal.sections.section_variablenames import LocalVariable, LocalVariableList
+from internal.sections.section_waypoints import Waypoint, WaypointList
 from internal.trigger_container import TriggerContainer
 
 try:
@@ -18,12 +18,14 @@ except ImportError:
 
 
 class SpawnpointInfo:
-    def __init__(self, area: SpawnArea, waypoint_index: int, id_factory: IDFactory):
+    def __init__(self, area: SpawnArea, waypoint: Waypoint, id_factory: IDFactory):
         self.id_factory = id_factory
         self.area = area
         self.team = None
-        self.wp_index = waypoint_index
-        self.wp_letter = Waypoint.num_to_letter(waypoint_index)
+        self.waypoint = waypoint
+        # self.wp_index = waypoint_index
+        # self.wp_letter = Waypoint.num_to_letter(waypoint_index)
+
 
 
 
@@ -32,7 +34,7 @@ class SpawnpointInfo:
         team.id = self.id_factory.next()
         team.max = '5'
         team.name = 'SPAWN - {} - w{} ({})'.format(
-            self.area.name, self.wp_index, self.area.techtype
+            self.area.name, self.waypoint.index, self.area.techtype
         )
         team.full = 'yes'
         team.group = '-1'
@@ -72,14 +74,16 @@ class SpawnpointInfo:
         self.trigger_spawn = TriggerContainer(self.id_factory)
         self.trigger_spawn.setFlags(True, 2)
         self.trigger_spawn.setName('SPAWN - {} - w{} spawn ({})'.format(
-            self.area.name, self.wp_index, self.area.techtype)
+            self.area.name, self.waypoint.index, self.area.techtype)
         )
 
-        self.trigger_spawn.addCondition(Event.EVENT_RANDOM_DELAY, 0, self.area.respawn_delay)
+        random_delay = self.area.calc_distributed_spawn_delay(self.waypoint)
+
+        self.trigger_spawn.addCondition(Event.EVENT_RANDOM_DELAY, 0, random_delay)
         self.trigger_spawn.addCondition(Event.EVENT_LOCAL_IS_SET, 0, activation_var.id)
         self.trigger_spawn.addAction(
             Action.ACTION_REINFORCEMENT_BY_CHRONO,
-            1, self.team.id, 0, 0, 0, 0, self.wp_letter
+            1, self.team.id, 0, 0, 0, 0, self.waypoint.to_letter()
         )
         self.trigger_spawn.addAction(
             Action.ACTION_ENABLE_TRIGGER,
